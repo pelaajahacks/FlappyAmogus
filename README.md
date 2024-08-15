@@ -4,4 +4,5 @@
 ## To run 
 run main.py with python3
 
-## To make a binary, run compile.bat (works on linux and windows)
+## To make a binary 
+run compile.bat (works on linux and windows)
