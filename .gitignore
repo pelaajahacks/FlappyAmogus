@@ -3,7 +3,8 @@
 /compile.bat
 /data.json
 /dist
-/main.spec
+/main.*/
 /output
 /requirements.txt
 /venv
+/main.bin
